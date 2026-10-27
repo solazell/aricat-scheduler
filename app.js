@@ -6,7 +6,7 @@ const BUILTIN = ['Mali', 'Itim', 'Sriracha', 'Pattaya', 'Chonburi', 'Mitr', 'Kod
 const FILT = { none: 'none', bright: 'brightness(1.1) saturate(1.2)', warm: 'sepia(.25) saturate(1.3) brightness(1.05)', soft: 'contrast(.9) brightness(1.1) saturate(1.1)', bw: 'grayscale(1)' };
 const CTA = `🐱 โรงแรมแมวอารี | Ari Cat Hotel
 💰 เริ่มต้น 250 บาท/วัน | From 250 THB/night
-✅ แอร์ 24 ชม. • เครื่องฟอกอากาศ • รปภ. 24 ชม. • อัพเดทเจ้านาย 3 เวลา
+✅ แอร์ 24 ชม. • เครื่องฟอกอากาศ • ดูแลตลอด 24 ชม. • อัพเดทเจ้านาย 3 เวลา
 📞 095-2946491 | WhatsApp 099-4291439
 Line: @aricathotel https://lin.ee/IJYfsgb
 💬 m.me/AriCatHotel
