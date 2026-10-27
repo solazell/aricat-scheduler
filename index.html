@@ -1,25 +1,31 @@
 <!doctype html>
 <html lang="th"><head><meta charset="utf-8">
+<title>Ari Cat Scheduler</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#ff7aa8">
+<meta name="theme-color" content="#ff6b9a">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon-192.png"><title>Ari Cat Scheduler</title>
+<link rel="icon" href="icon-192.png">
 <script src="theme.js"></script>
 <link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mali:wght@600&family=Itim&family=Sriracha&family=Pattaya&family=Chonburi&family=Mitr:wght@500&family=Kodchasan:wght@600&family=Kanit:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600&family=Mali:wght@600&family=Itim&family=Sriracha&family=Pattaya&family=Chonburi&family=Mitr:wght@500&family=Kodchasan:wght@600&family=Kanit:wght@500&display=swap">
 </head><body>
-<header><span>🐱 โรงแรมแมวอารี – ตั้งเวลาโพสต์ Facebook</span><select id="theme" title="ธีม"><option value="auto">🌓 ตามระบบ</option><option value="light">☀️ สว่าง</option><option value="dark">🌙 มืด</option></select></header>
-<nav><button data-tab="create" class="on">✨ สร้างโพสต์</button><button data-tab="queue">📅 คิวโพสต์</button><button data-tab="settings">⚙️ ตั้งค่า</button></nav>
+<header class="top"><div class="brand"><span class="logo">🐱</span><div><b>Ari Cat Hotel</b><small>โรงแรมแมวอารี • ตั้งเวลาโพสต์ Facebook</small></div></div>
+<select id="theme" title="ธีม"><option value="auto">🌓 ตามระบบ</option><option value="light">☀️ สว่าง</option><option value="dark">🌙 มืด</option></select></header>
+<nav class="tabs">
+<button data-tab="create" class="on"><span class="ic">✨</span><span>สร้างโพสต์</span></button>
+<button data-tab="queue"><span class="ic">📅</span><span>คิวโพสต์</span></button>
+<button data-tab="settings"><span class="ic">⚙️</span><span>ตั้งค่า</span></button>
+</nav>
 <main>
 <section id="create" class="on"><div class="grid">
- <div class="card"><h3>1) รูป / วิดีโอ</h3>
-  <input type="file" id="file" accept="image/*,video/*" multiple>
-  <small>เลือกได้สูงสุด 10 รูปต่อโพสต์ (โพสต์เป็นอัลบั้ม) หรือวิดีโอ 1 ไฟล์ • เลือกเพิ่มได้เรื่อยๆ • กด ✕ เพื่อลบ</small>
+ <div class="card"><h3><span class="step">1</span>รูป / วิดีโอ</h3>
+  <label class="drop" for="file"><span class="big">📷</span><b>แตะเพื่อเลือกรูป / วิดีโอ</b><small>รูปสูงสุด 10 รูป (โพสต์เป็นอัลบั้ม) หรือวิดีโอ 1 ไฟล์ • เลือกเพิ่มได้เรื่อยๆ</small></label>
+  <input type="file" id="file" accept="image/*,video/*" multiple hidden>
   <div id="thumbs"></div>
-  <div style="margin-top:10px"><canvas id="cv" width="400" height="300"></canvas><video id="vid" controls style="display:none"></video></div>
-  <small>ลากข้อความบนรูปเพื่อย้ายตำแหน่งได้ • แต่ละรูปแต่งแยกกันได้</small>
+  <div class="stage"><canvas id="cv" width="400" height="300"></canvas><video id="vid" controls style="display:none"></video></div>
+  <small>ลากข้อความบนรูปเพื่อย้ายตำแหน่ง • แต่ละรูปแต่งแยกกันได้ • กด ✕ ที่รูปย่อเพื่อลบ</small>
   <div id="editor">
-   <div class="row" style="margin-top:8px"><button class="btn" id="rnd">🎲 สุ่มสไตล์ตัวอักษร</button><button class="btn" id="rndAll">🎲 สุ่มทุกรูป</button><button class="btn alt" id="applyAll">ใช้สไตล์นี้กับทุกรูป</button></div>
+   <div class="row" style="margin-top:12px"><button class="btn" id="rnd">🎲 สุ่มสไตล์ตัวอักษร</button><button class="btn" id="rndAll">🎲 สุ่มทุกรูป</button><button class="btn alt" id="applyAll">ใช้สไตล์นี้กับทุกรูป</button></div>
    <label>ข้อความบนรูป (ขึ้นบรรทัดใหม่ได้)</label><textarea id="txt" style="min-height:60px"></textarea>
    <div class="row"><div><label>ฟอนต์</label><select id="font"></select></div>
     <div><label>อัปโหลดฟอนต์ (.ttf/.otf/.woff)</label><input type="file" id="fontUp" accept=".ttf,.otf,.woff,.woff2"></div></div>
@@ -31,36 +37,47 @@
     <div><label>กรอบ</label><select id="frame"><option value="0">ไม่มี</option><option value="1">มี</option></select></div>
     <div><label>สีกรอบ</label><input type="color" id="c3" value="#ffd1e0"></div></div>
   </div></div>
- <div class="card"><h3>2) แคปชั่น</h3>
-  <label>อารมณ์ของโพสต์ (เว้นว่าง = ระบบคิดให้)</label><input type="text" id="mood" placeholder="เช่น ขี้เล่น, อบอุ่น, โปรโมชั่น">
-  <label>แคปชั่นเสริม (เว้นว่างได้)</label><input type="text" id="extra" placeholder="เช่น วันนี้น้องส้มเช็คอิน">
-  <div class="row" style="margin:8px 0"><button class="btn" id="gen">🪄 คิดแคปชั่น</button><label style="flex:none"><input type="checkbox" id="cta" checked> แนบข้อมูลติดต่อท้ายโพสต์</label></div>
-  <textarea id="caption" placeholder="แคปชั่นจะขึ้นที่นี่ แก้ไขได้ก่อนโพสต์"></textarea>
-  <h3 style="margin-top:14px">3) ตั้งเวลา</h3>
-  <label><input type="radio" name="mode" value="auto" checked> ต่อคิวอัตโนมัติ (ช่วงเวลาถัดไปที่ว่างตามตั้งค่า)</label>
-  <label><input type="radio" name="mode" value="manual"> กำหนดเอง</label>
-  <input type="datetime-local" id="when">
-  <div style="margin-top:12px"><button class="btn" id="add">➕ เพิ่มเข้าคิว</button></div>
+ <div>
+ <div class="card"><h3><span class="step">2</span>แคปชั่น</h3>
+  <label>อารมณ์ของโพสต์ <small>(แตะเลือก หรือพิมพ์เอง • เว้นว่าง = สุ่มให้)</small></label>
+  <div id="moods" class="chips"></div>
+  <input type="text" id="mood" placeholder="เช่น ขี้เล่น, อบอุ่น, ตลกๆ หรือพิมพ์อารมณ์ของคุณเอง">
+  <label>ข้อความเสริมที่อยากแทรก <small>(เว้นว่างได้)</small></label>
+  <input type="text" id="extra" placeholder="เช่น วันนี้น้องส้มเช็คอิน / ชื่อน้อง / โปรพิเศษ">
+  <div class="row" style="margin:12px 0"><button class="btn big-btn" id="gen">🪄 คิดแคปชั่น</button><label class="check"><input type="checkbox" id="cta" checked> แนบข้อมูลติดต่อท้ายโพสต์</label></div>
+  <textarea id="caption" placeholder="แคปชั่นจะขึ้นที่นี่ แก้ไขได้ก่อนโพสต์ • กด 🪄 ซ้ำเพื่อสุ่มใหม่"></textarea></div>
+ <div class="card"><h3><span class="step">3</span>ตั้งเวลา</h3>
+  <div class="seg"><label><input type="radio" name="mode" value="auto" checked><span>⚡ ต่อคิวอัตโนมัติ</span></label><label><input type="radio" name="mode" value="manual"><span>🗓️ กำหนดเอง</span></label></div>
+  <small>ต่อคิวอัตโนมัติ = ช่วงเวลาถัดไปที่ว่างตามที่ตั้งค่าไว้</small>
+  <input type="datetime-local" id="when" style="margin-top:8px">
+  <div style="margin-top:14px"><button class="btn big-btn" id="add">➕ เพิ่มเข้าคิว</button></div></div>
  </div></div></section>
-<section id="queue"><div class="card"><div class="row" style="justify-content:space-between"><h3>คิวโพสต์</h3><button class="btn alt" id="runNow">ตรวจคิวตอนนี้</button></div><div id="list"></div></div></section>
+<section id="queue"><div class="card"><div class="row" style="justify-content:space-between"><h3>คิวโพสต์</h3><button class="btn alt" id="runNow" style="flex:none">ส่งโพสต์ที่ค้างอยู่</button></div><div id="list"></div></div></section>
 <section id="settings"><div class="grid">
- <div class="card"><h3>เชื่อมต่อ Facebook Page</h3>
+ <div class="card"><h3><span class="step">🔗</span>เชื่อมต่อ Facebook Page</h3>
   <label>Facebook App ID</label><input type="text" id="appId">
-  <label>App Secret (ไม่บังคับ ใช้ขยายอายุ token ให้ไม่หมดอายุ)</label><input type="password" id="appSecret">
-  <label>Redirect URI (นำไปใส่ใน Facebook Login → Valid OAuth Redirect URIs)</label><input type="text" id="redir" readonly>
-  <div class="row" style="margin-top:8px"><button class="btn" id="login">เข้าสู่ระบบ Facebook</button></div>
+  <label>App Secret <small>(ไม่บังคับ ใช้ขยายอายุ token ให้ไม่หมดอายุ)</small></label><input type="password" id="appSecret">
+  <label>Redirect URI <small>(นำไปใส่ใน Facebook Login → Valid OAuth Redirect URIs)</small></label><input type="text" id="redir" readonly>
+  <div class="row" style="margin-top:10px"><button class="btn" id="login">เข้าสู่ระบบ Facebook</button></div>
   <label>เลือกเพจ</label><select id="pages"></select>
   <hr><small>หรือกรอกเอง (Page Access Token จาก Graph API Explorer)</small>
   <label>Page ID</label><input type="text" id="pageId">
   <label>Page Access Token</label><input type="password" id="pageToken">
-  <div class="row" style="margin-top:8px"><button class="btn" id="test">ทดสอบการเชื่อมต่อ</button></div></div>
- <div class="card"><h3>ตารางโพสต์ & AI</h3>
+  <div class="row" style="margin-top:10px"><button class="btn" id="test">ทดสอบการเชื่อมต่อ</button></div></div>
+ <div class="card"><h3><span class="step">⏰</span>ตารางโพสต์ & AI</h3>
   <label>โพสต์ต่อวัน</label><select id="perDay"><option>1</option><option selected>2</option></select>
   <div class="row"><div><label>เวลาโพสต์ที่ 1</label><input type="time" id="t1" value="12:00"></div><div><label>เวลาโพสต์ที่ 2</label><input type="time" id="t2" value="19:00"></div></div>
-  <label>Anthropic API Key (ไม่บังคับ ถ้ามีจะได้แคปชั่นคุณภาพสูง + AI มองรูปแล้วเขียนให้)</label><input type="password" id="claudeKey" placeholder="sk-ant-...">
+  <label>Anthropic API Key <small>(ไม่บังคับ)</small></label><input type="password" id="claudeKey" placeholder="sk-ant-...">
+  <details class="help"><summary>🤖 Anthropic API Key คืออะไร / ใช้ยังไง</summary>
+   <p>ถ้าใส่คีย์นี้ ปุ่ม 🪄 จะให้ Claude (AI) <b>ดูรูปที่แต่งแล้ว</b> แล้วเขียนแคปชั่นไทย-อังกฤษและแฮชแท็กให้ใหม่ทุกครั้ง ตรงกับอารมณ์ที่เลือก ถ้าเว้นว่าง แอปจะสุ่มจากคลังแคปชั่นสำเร็จรูปแทน (ใช้งานได้ปกติ ไม่เสียเงิน)</p>
+   <ol><li>เข้า <a href="https://platform.claude.com" target="_blank" rel="noopener">platform.claude.com</a> (Claude Console) แล้วสมัคร/ล็อกอิน</li>
+   <li>ไปที่ <b>Billing</b> เติมเครดิต (ต้องเติมก่อน ไม่งั้นคีย์ใช้ไม่ได้)</li>
+   <li>ไปที่ <b>API keys → Create Key</b> ตั้งชื่อ แล้วคัดลอกคีย์ (ขึ้นต้น <code>sk-ant-</code>) เก็บไว้ เพราะจะแสดงครั้งเดียว</li>
+   <li>วางในช่องด้านบนแล้วกด <b>บันทึกการตั้งค่า</b></li></ol>
+   <p>⚠️ บัญชี claude.ai (แชท/Pro/Max) แยกจาก API ไม่ใช้เครดิตร่วมกัน • คีย์เก็บในอุปกรณ์นี้เท่านั้น อย่าแชร์หรือแคปหน้าจอให้ใคร • ค่าใช้จ่ายต่อแคปชั่นน้อยมาก ดูราคาจริงและยอดใช้งานได้ใน Console</p></details>
   <label>Graph API version</label><input type="text" id="apiVer" value="v23.0">
-  <div style="margin-top:12px"><button class="btn" id="save">💾 บันทึกการตั้งค่า</button></div>
-  <p><small>ข้อมูลทั้งหมดเก็บในเครื่องคุณ (chrome.storage / IndexedDB)</small></p></div>
+  <div style="margin-top:14px"><button class="btn big-btn" id="save">💾 บันทึกการตั้งค่า</button></div>
+  <p><small>ข้อมูลทั้งหมดเก็บในอุปกรณ์ของคุณ</small></p></div>
 </div></section>
 </main><div id="toast"></div>
 <script src="db.js"></script><script src="app.js"></script></body></html>

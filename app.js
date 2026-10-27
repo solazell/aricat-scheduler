@@ -176,10 +176,67 @@ async function finalBlobs() {
 }
 
 /* ---------- captions ---------- */
-const TH_HOOKS = ['ใครอยากให้เจ้านายได้พักผ่อนสบายๆ ยกมือขึ้น 🙋', 'ทาสจ๋า... ไปเที่ยวได้เลย เดี๋ยวเจ้านายเราดูแลเอง 😻', 'ห้องแอร์เย็นฉ่ำ ที่นอนนุ่มฟู เจ้านายแฮปปี้ ทาสก็สบายใจ 🐾', 'วันนี้เจ้านายของเราน่ารักเกินห้ามใจ 🥹', 'ฝากน้องแมวกับเราได้เลย รับรองกลับมาตัวนุ่มกว่าเดิม ✨'];
-const EN_LINES = ['Going on a trip? Your fur-boss is in good paws with us 🐱', 'Air-con, soft beds & endless cuddles. Purr-fect stay in Phuket!', 'Clean rooms, happy cats, relaxed humans 😻', 'Too cute to handle. Book a cozy stay for your kitty today!', 'Your cat’s home away from home, from just 250 THB/night 🐾'];
-const TAGS = '#โรงแรมแมว #ฝากแมวภูเก็ต #โรงแรมแมวภูเก็ต #แมวน่ารัก #ทาสแมว #แมวอารี #AriCatHotel #PhuketCatHotel #CatBoarding #CatHotel #PhuketPets #CatLovers';
+/* ---------- คลังแคปชั่นสุ่ม ---------- */
+const MOODS = [['play', '🎾 ขี้เล่น'], ['warm', '🤍 อบอุ่น'], ['funny', '😹 ตลกๆ'], ['cute', '🥹 น่ารักฟุ้งฟิ้ง'], ['promo', '📣 ชวนจอง/โปรโมชั่น'], ['clean', '🧼 สะอาดน่าไว้ใจ'], ['miss', '📸 คิดถึง/อัพเดทเจ้านาย'], ['holiday', '🏖️ เทศกาล/วันหยุด']];
+const MOOD_RE = { play: /เล่น|ซน|สนุก|play/i, warm: /อบอุ่น|อุ่น|ซึ้ง|warm|cozy/i, funny: /ตลก|ขำ|ฮา|funny/i, cute: /น่ารัก|ฟุ้ง|cute/i, promo: /โปร|จอง|ราคา|promo|book/i, clean: /สะอาด|ไว้ใจ|clean/i, miss: /คิดถึง|อัพเดท|อัปเดต|miss/i, holiday: /เทศกาล|วันหยุด|สงกรานต์|ปีใหม่|holiday/i };
+const TH_HOOK = {
+  play: ['วิ่งซ้ายทีขวาทีทั้งวัน เจ้านายของเรากำลังสนุกสุดๆ 🏃‍♂️', 'ห้องนี้มีแต่เสียงเหมียว เสียงหัวเราะ และของเล่นกระจุยกระจาย 🧶', 'กระโดดโลดเต้นให้หนำใจ ใครว่าแมวขี้เกียจ? 😹', 'วันนี้น้องแมวขอเล่นให้สุดแล้วค่อยนอนต่อ 🎾', 'ของเล่นส่วนกลางเพียบ น้องๆ แย่งกันจนต้องต่อคิว 😆', 'พลังงานล้นปรี่! เพื่อนใหม่ก็ได้ ของเล่นก็ได้เล่น 🐾'],
+  warm: ['อบอุ่นเหมือนบ้าน แต่แอร์เย็นกว่าบ้านทาสอีก ❄️🏠', 'ที่นอนนุ่มๆ หลุมนอนส่วนตัว หลับสบายจนตื่นมากินข้าวอย่างเดียว 😴', 'ฝากเจ้านายไว้กับเรา แล้วไปเที่ยวให้สบายใจได้เลย 💕', 'ทุกวันมีคนคอยดูแล ใส่ใจเหมือนน้องเป็นลูกของเรา 🤍', 'แสงแดดอ่อนๆ ที่นอนนุ่มๆ ความสุขของน้องแมวง่ายๆ แค่นี้ ☀️', 'ห่างบ้านแต่ไม่ห่างความรัก น้องอยู่กับเราอบอุ่นแน่นอน 🫶'],
+  funny: ['เจ้านายถามว่า "ทาสไปไหน?" ... เดี๋ยวเรากลับมารับ ฝากอัพเดทไว้ 3 เวลาแล้ว 😹', 'ไม่ได้อ้วน แค่ฟูเกินไป! 🐱🍗', 'น้องบอกว่า "ทาสไปเที่ยวต่อได้ เราขออยู่ต่ออีก 3 วัน" 😼', 'ท่านอนนี้ต้องส่งประกวด ใครเห็นแล้วใจละลายบ้าง? 🫠', 'เหมียวไม่เข้าใจเรื่องค่าเงิน แต่เข้าใจเรื่องแอร์เย็นๆ นะ 💸❄️', 'รีวิวจากเจ้านาย: "ห้องดี อาหารดี ทาสไม่ต้องรีบมารับ" ⭐⭐⭐⭐⭐'],
+  cute: ['น่ารักจนต้องหยุดมองสักห้านาที 🥹💗', 'ตาโตๆ แบบนี้ ใครจะไปใจแข็งได้ล่ะ 👀', 'ฟูๆ นุ่มๆ หน้ากลมๆ ความน่ารักระดับสูงสุด ☁️🐱', 'ขนฟู หูตั้ง ตาแป๋ว ครบทุกองค์ประกอบของความน่ารัก 🌸', 'แค่เห็นหน้าน้อง ความเหนื่อยก็หายไปหมด 🍼', 'วันนี้น้องน่ารักกว่าเมื่อวาน (และพรุ่งนี้จะน่ารักกว่าวันนี้) ✨'],
+  promo: ['กำลังจะไปเที่ยว? จองห้องให้เจ้านายก่อนเต็มนะ 📣', 'เริ่มต้นเพียง 250 บาท/วัน ฟรีของใช้จุกๆ ครบ! 🎁', 'ช่วงเทศกาลห้องพักหมดไว มาจองคิวล่วงหน้ากันเลย 🗓️', 'ฝากเจ้านายง่ายๆ แค่ทักแชท 💬', 'แอร์ 24 ชม. เครื่องฟอกอากาศ ที่นอนนุ่ม ราคาเริ่มต้น 250 เท่านั้น 🏨', 'อยากให้ทริปนี้ไร้กังวล ฝากน้องไว้กับเราสิ 🧳'],
+  clean: ['คลีนกระบะทุกครั้งที่น้องทำธุระเสร็จ สะอาดจริง ไม่ต้องห่วง 🧼', 'แยกทำความสะอาดทีละห้อง ไม่ปะปน ปลอดภัยทั้งน้องและเพื่อนๆ 🧴', 'ใช้ผลิตภัณฑ์ทำความสะอาดสำหรับสัตว์เลี้ยงโดยเฉพาะ ✨', 'เครื่องฟอกอากาศเปิดตลอด 24 ชั่วโมง หายใจโล่งทั้งโรงแรม 🌿', 'สะอาดเหนือระดับ เพราะน้องแมวคือคนสำคัญ 💖', 'ห้องหอมสะอาด น้ำดื่มผ่านเครื่องกรอง Coway ทุกวัน 💧'],
+  miss: ['ทาสจ๋า คิดถึงน้องไหม? นี่ภาพล่าสุดของเจ้านาย 📸', 'อัพเดทเจ้านาย 3 เวลา ทาสไม่ต้องเป็นห่วง 🕘', 'วันนี้น้องกินข้าวหมด เล่นสนุก นอนหลับสบาย รายงานเรียบร้อย ✅', 'น้องส่งข่าวมาบอกว่า "สบายดี อย่าคิดถึงมาก" 😽', 'ห่างกันแค่ตัว แต่ใจเรายังดูแลน้องทุกนาที 💌', 'ส่งความคิดถึงจากน้องมาให้ทาสตอนนี้เลย 🐾'],
+  holiday: ['วันหยุดยาวนี้ ไปเที่ยวให้เต็มที่ เจ้านายเราดูแลเอง 🏖️', 'ปีใหม่ สงกรานต์ หรือทริปสั้นๆ ฝากน้องไว้ที่เรา ✈️', 'ลาพักร้อนทั้งที ไม่ต้องห่วงใครที่บ้าน 🌴', 'เทศกาลนี้ให้เจ้านายได้พักผ่อนบ้าง 🎉', 'จองก่อนวันหยุดเต็ม ห้องพักหมดเร็วมากช่วงเทศกาล 🚨', 'เที่ยวไกลแค่ไหน น้องแมวสบายใจแน่นอน 🧳💕'],
+};
+const TH_BODY = ['ที่นี่มีแอร์เย็นตลอด 24 ชม. ที่นอนนุ่ม และหลุมนอนส่วนตัวให้น้องทุกห้อง', 'ฟรีกระบะทราย ชามอาหาร น้ำกรอง Coway และของเล่นส่วนกลาง', 'มีระบบรักษาความปลอดภัย 24 ชม. และอัพเดทเจ้านายให้ทาสทราบวันละ 3 เวลา', 'ทุกห้องมีที่ข่วนเล็บส่วนตัว ให้น้องได้ลับเล็บอย่างมีความสุข', 'เครื่องฟอกอากาศเปิดตลอด อากาศสะอาด น้องหายใจสบาย', 'เราคลีนกระบะทุกครั้งที่น้องทำธุระเสร็จ และแยกทำความสะอาดทีละห้อง', 'ราคาเริ่มต้น 250 บาท/วัน พร้อมของใช้ฟรีจุกๆ', 'ทีมงานรักแมวดูแลใกล้ชิด ใส่ใจทุกรายละเอียด'];
+const TH_END = ['จองห้องให้เจ้านายได้เลยนะ 💌', 'ทักแชทมาได้ตลอด 🫶', 'พาน้องมาเที่ยวกับเรานะ 🐾', '', ''];
+const EN_LINE = {
+  play: ['Zoomies approved! Our guests are having the time of their lives 🎾', 'Toys, tunnels and endless play — a purr-fect vacation for your cat', 'No boring days here — only play, nap, repeat 😹', 'Energy level: maximum. Fun level: unlimited 🐾'],
+  warm: ['A cozy second home for your fur-baby, with love in every corner 🤍', 'Soft beds, cool air and gentle care — your cat is in good paws', 'Go enjoy your trip. We’ll cuddle your kitty like our own 💕', 'Warm hearts, comfy beds, happy whiskers ☀️'],
+  funny: ['Plot twist: your cat doesn’t want to come home 😹', 'Not fat, just fluffy. Extra fluffy. 🐱', 'Your cat called — they’re extending the vacation 🤣', 'Hotel review from the cat: “5 stars, would nap again.” ⭐'],
+  cute: ['Warning: extreme cuteness overload 🥹', 'Those eyes could melt anyone’s heart 💗', 'Fluffy, round and utterly adorable ☁️', 'Cuteness level: off the charts ✨'],
+  promo: ['Planning a trip? Book your cat’s stay early — rooms fill up fast! 📣', 'From just 250 THB/night, with lots of free goodies 🎁', 'Worry-free travel starts with a happy cat. Book now! 🧳', 'Air-con, air purifier, soft beds & 24h security — all included 🏨'],
+  clean: ['Litter cleaned after every use. Every room cleaned separately 🧼', 'Pet-safe cleaning products only — your cat deserves the best ✨', '24h air purifier, filtered water, spotless rooms 🌿', 'Hygiene first, always. Your cat’s health is our priority 💖'],
+  miss: ['Daily updates, 3 times a day — so you never have to miss your kitty 📸', 'Your cat says: “I’m great! Don’t miss me too much.” 😽', 'Fed, played, napped. Report complete ✅', 'Sending whisker kisses to the humans back home 💌'],
+  holiday: ['Holiday plans? Your cat’s covered 🏖️', 'Travel far, worry less — we’ve got your cat 🌴', 'Festive season fills up fast — reserve your cat’s room today 🚨', 'Enjoy your break. We’ll take care of the purr-sonality at home ✈️'],
+};
+const EN_END = ['Book your stay today!', 'DM us to reserve 💬', 'See you soon, meow! 🐾', '', ''];
+const TAG_TH = ['#โรงแรมแมว', '#ฝากแมวภูเก็ต', '#โรงแรมแมวภูเก็ต', '#แมวน่ารัก', '#ทาสแมว', '#ฝากแมว', '#แมวภูเก็ต', '#รักแมว', '#แมวเหมียว', '#ทาสแมวภูเก็ต', '#ฝากแมวเที่ยว', '#ที่พักแมว'];
+const TAG_EN = ['#PhuketCatHotel', '#CatBoarding', '#CatHotel', '#PhuketPets', '#CatLovers', '#CatsOfInstagram', '#CatsOfPhuket', '#PetFriendly', '#KittyVacation', '#CatCare', '#Phuket', '#CatLife'];
+const TAG_MOOD = { promo: '#โปรโมชั่น #BookNow', holiday: '#วันหยุด #HolidayPlans', clean: '#สะอาด #CleanAndSafe', cute: '#แมวฟู #CuteCats', funny: '#แมวตลก #FunnyCats', play: '#แมวซน #PlayTime', miss: '#อัพเดทน้องแมว #CatUpdate', warm: '#ฝากรัก #CozyCats' };
+const TAGS = '#โรงแรมแมวอารี #AriCatHotel #โรงแรมแมว #ฝากแมวภูเก็ต #PhuketCatHotel #CatBoarding #CatHotel #PhuketPets #CatLovers';
 const pick = a => a[Math.floor(Math.random() * a.length)];
+const shuffle = a => a.map(v => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map(x => x[1]);
+// เลือกข้อความที่ไม่ซ้ำกับ 5 ครั้งล่าสุด
+function pickFresh(arr, key) {
+  let rec = []; try { rec = JSON.parse(localStorage.getItem('recent_' + key) || '[]'); } catch { }
+  const fresh = arr.filter(x => !rec.includes(x)), v = pick(fresh.length ? fresh : arr);
+  try { localStorage.setItem('recent_' + key, JSON.stringify([...rec, v].slice(-5))); } catch { }
+  return v;
+}
+function moodKey(text) { for (const k in MOOD_RE) if (MOOD_RE[k].test(text || '')) return k; return pick(Object.keys(TH_HOOK)); }
+function templateCaption(mood, extra) {
+  const k = moodKey(mood);
+  const th = [extra, pickFresh(TH_HOOK[k], 'th' + k), Math.random() < .8 ? pickFresh(TH_BODY, 'body') : '', pick(TH_END)].filter(Boolean).join('\n');
+  const en = [pickFresh(EN_LINE[k], 'en' + k), pick(EN_END)].filter(Boolean).join(' ');
+  const tags = ['#โรงแรมแมวอารี', '#AriCatHotel', ...shuffle(TAG_TH).slice(0, 4), ...shuffle(TAG_EN).slice(0, 4), TAG_MOOD[k]].join(' ');
+  return { th, en, tags };
+}
+function buildMoodChips() {
+  const box = $('moods'); if (!box) return;
+  box.innerHTML = '';
+  const sync = () => [...box.children].forEach(b => b.classList.toggle('on', b.dataset.v === $('mood').value.trim()));
+  MOODS.forEach(([k, label]) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = label;
+    b.dataset.v = label.replace(/^\S+\s/, '');
+    b.onclick = () => { $('mood').value = $('mood').value.trim() === b.dataset.v ? '' : b.dataset.v; sync(); };
+    box.append(b);
+  });
+  const r = document.createElement('button'); r.type = 'button'; r.className = 'chip'; r.textContent = '🎲 สุ่มให้เลย';
+  r.onclick = () => { $('mood').value = ''; sync(); }; box.append(r);
+  $('mood').addEventListener('input', sync);
+}
 
 async function genCaption() {
   const st = store.get();
@@ -195,8 +252,8 @@ async function genCaption() {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-api-key': st.claudeKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
         body: JSON.stringify({
-          model: 'claude-sonnet-5-5', max_tokens: 1000,
-          system: `คุณเป็นแอดมินเพจโรงแรมแมวที่เก่งการตลาด เขียนโพสต์ Facebook ให้หยุดนิ้วคนที่กำลังเลื่อน: เปิดด้วยประโยคเด็ด ภาษาน่ารัก เป็นกันเอง ใช้อีโมจิพอดี สั้นกระชับ ไม่เกิน 4 บรรทัดต่อภาษา ถ้ามีรูปให้เขียนให้เข้ากับสิ่งที่เห็นในรูป ห้ามแต่งข้อมูลโรงแรมนอกเหนือจากนี้: ${HOTEL_INFO}\nตอบเป็น JSON เท่านั้น ไม่มี markdown: {"th":"แคปชั่นไทย","en":"English caption","hashtags":"#แฮชแท็กไทย #EnglishHashtags (8-12 อัน ผสม 2 ภาษา)"}`,
+          model: 'claude-sonnet-5-5', max_tokens: 1000, temperature: 1,
+          system: `คุณเป็นแอดมินเพจโรงแรมแมวที่เก่งการตลาด เขียนโพสต์ Facebook ให้หยุดนิ้วคนที่กำลังเลื่อน: เปิดด้วยประโยคเด็ด ภาษาน่ารัก เป็นกันเอง ใช้อีโมจิพอดี สั้นกระชับ ไม่เกิน 4 บรรทัดต่อภาษา ถ้ามีรูปให้เขียนให้เข้ากับสิ่งที่เห็นในรูป ใช้โครงประโยคและมุมมองที่ต่างจากโพสต์ก่อนหน้าทุกครั้ง ห้ามแต่งข้อมูลโรงแรมนอกเหนือจากนี้: ${HOTEL_INFO}\nตอบเป็น JSON เท่านั้น ไม่มี markdown: {"th":"แคปชั่นไทย","en":"English caption","hashtags":"#แฮชแท็กไทย #EnglishHashtags (8-12 อัน ผสม 2 ภาษา)"}`,
           messages: [{ role: 'user', content }]
         })
       });
@@ -206,10 +263,7 @@ async function genCaption() {
       th = o.th; en = o.en; tags = o.hashtags || TAGS;
     } catch (e) { toast('AI ใช้ไม่ได้ ใช้แบบสำเร็จรูปแทน: ' + e.message); }
   }
-  if (!th) {
-    th = (extra ? extra + '\n' : '') + pick(TH_HOOKS) + (mood ? `\n(${mood})` : '');
-    en = pick(EN_LINES);
-  }
+  if (!th) ({ th, en, tags } = templateCaption(mood, extra));
   return [th, en, $('cta').checked ? CTA : '', tags].filter(Boolean).join('\n\n');
 }
 $('gen').onclick = async () => { $('gen').disabled = true; $('caption').value = await genCaption(); $('gen').disabled = false; };
@@ -278,7 +332,7 @@ $('runNow').onclick = async () => {
 
 $('theme').value = localStorage.getItem('theme') || 'auto';
 $('theme').onchange = () => { localStorage.setItem('theme', $('theme').value); applyTheme(); };
-fillFonts(); loadCustomFonts(); loadSettings().then(finishLogin);
+buildMoodChips(); fillFonts(); loadCustomFonts(); loadSettings().then(finishLogin);
 
 /* ---------- ส่งไป Facebook ทันที (Facebook เป็นผู้ตั้งเวลาโพสต์ให้ ไม่ต้องเปิดแอปค้าง) ---------- */
 async function publish(p, st, now) {
