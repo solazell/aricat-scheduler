@@ -87,9 +87,9 @@ $('fontUp').onchange = async e => {
 };
 
 /* ---------- editor (หลายรูป) ---------- */
-const CTRL = ['txt', 'font', 'size', 'sw', 'c1', 'c2', 'c3', 'flt', 'frame'];
+const CTRL = ['txt', 'font', 'size', 'sw', 'c1', 'c2', 'c3', 'flt', 'frame', 'wm', 'wmPos', 'wmSize', 'wmOp'];
 let items = [], cur = 0;
-const defaults = () => ({ txt: '', font: 'Mali', size: '9', sw: '10', c1: '#ffffff', c2: '#ff5c93', c3: '#ffd1e0', flt: 'none', frame: '0', pos: { x: .5, y: .85 } });
+const defaults = () => ({ txt: '', font: 'Mali', size: '9', sw: '10', c1: '#ffffff', c2: '#ff5c93', c3: '#ffd1e0', flt: 'none', frame: '0', ...wmPref(), pos: { x: .5, y: .85 } });
 const isVideo = () => items.length && items[0].video;
 $('file').onchange = e => {
   let fs = [...e.target.files]; e.target.value = '';
@@ -142,7 +142,7 @@ function randomStyle(it) {
 }
 $('rnd').onclick = () => { const it = items[cur]; if (!it || it.video) return; randomStyle(it); CTRL.forEach(k => $(k).value = it.s[k]); render(); };
 $('rndAll').onclick = () => { items.forEach(it => { if (!it.video) randomStyle(it); }); if (items[cur] && !items[cur].video) { CTRL.forEach(k => $(k).value = items[cur].s[k]); render(); } toast('สุ่มสไตล์ให้ทุกรูปแล้ว 🎲'); };
-async function drawItem(c, it, maxW = 1080) {
+async function drawBase(c, it, maxW = 1080) {
   const s = it.s, x = c.getContext('2d'), img = it.img;
   try { await document.fonts.load(`40px "${s.font}"`, s.txt || 'ก A'); } catch { }
   const W = Math.min(maxW, img.naturalWidth), H = Math.round(img.naturalHeight * W / img.naturalWidth);
@@ -161,13 +161,41 @@ async function drawItem(c, it, maxW = 1080) {
   }
 }
 function render() { const it = items[cur]; if (it && it.img && it.img.complete) return drawItem(cv, it); }
-CTRL.forEach(k => $(k).addEventListener('input', () => { if (items[cur] && !items[cur].video) { items[cur].s[k] = $(k).value; render(); } }));
+CTRL.forEach(k => $(k).addEventListener('input', () => { if (items[cur] && !items[cur].video) { items[cur].s[k] = $(k).value; if (k.startsWith('wm')) { const q = items[cur].s; localStorage.setItem('wmPref', JSON.stringify({ wm: q.wm, wmPos: q.wmPos, wmSize: q.wmSize, wmOp: q.wmOp })); } render(); } }));
 $('applyAll').onclick = () => { const s = items[cur].s; items.forEach(o => { if (!o.video) o.s = { ...s, pos: { ...s.pos } }; }); toast('ใช้สไตล์กับทุกรูปแล้ว'); };
 let drag = false;
 const mv = e => { const r = cv.getBoundingClientRect(); items[cur].s.pos = { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height }; render(); };
 cv.onpointerdown = e => { if (!items[cur]) return; drag = true; cv.setPointerCapture(e.pointerId); mv(e); };
 cv.onpointermove = e => drag && mv(e);
 cv.onpointerup = () => drag = false;
+
+/* ---------- โลโก้โรงแรม (แปะบนรูป) ---------- */
+const wmPref = () => { const d = { wm: '1', wmPos: 'br', wmSize: '18', wmOp: '95' }; try { return { ...d, ...JSON.parse(localStorage.getItem('wmPref') || '{}') }; } catch { return d; } };
+let LOGO = new Image();
+function loadLogo() { LOGO = new Image(); LOGO.src = localStorage.getItem('customLogo') || 'logo.png'; return LOGO.decode ? LOGO.decode().catch(() => { }) : Promise.resolve(); }
+let logoReady = loadLogo();
+async function drawLogo(c, s) {
+  if (s.wm !== '1') return;
+  await logoReady; if (!LOGO.naturalWidth) return;
+  const x = c.getContext('2d'), W = c.width, H = c.height, w = W * s.wmSize / 100, h = w * LOGO.naturalHeight / LOGO.naturalWidth, m = W * .03;
+  const px = { l: m, r: W - w - m, c: (W - w) / 2 }, py = { t: m, b: H - h - m, c: (H - h) / 2 };
+  x.save(); x.globalAlpha = s.wmOp / 100; x.drawImage(LOGO, px[s.wmPos[1]], py[s.wmPos[0]], w, h); x.restore();
+}
+async function drawItem(c, it, maxW = 1080) { await drawBase(c, it, maxW); await drawLogo(c, it.s); }
+$('logoUp').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const im = new Image(); im.src = URL.createObjectURL(f); await im.decode();
+    const k = Math.min(1, 600 / Math.max(im.naturalWidth, im.naturalHeight)), t = document.createElement('canvas');
+    t.width = Math.round(im.naturalWidth * k); t.height = Math.round(im.naturalHeight * k);
+    t.getContext('2d').drawImage(im, 0, 0, t.width, t.height);
+    localStorage.setItem('customLogo', t.toDataURL('image/png'));
+    logoReady = loadLogo(); await logoReady; render(); toast('เปลี่ยนโลโก้แล้ว');
+  } catch { toast('เปลี่ยนโลโก้ไม่สำเร็จ ลองไฟล์ PNG/JPG ที่เล็กลง'); }
+  e.target.value = '';
+};
+$('logoReset').onclick = async () => { localStorage.removeItem('customLogo'); logoReady = loadLogo(); await logoReady; render(); toast('ใช้โลโก้โรงแรมเดิมแล้ว'); };
+
 async function finalBlobs() {
   if (isVideo()) return [items[0].file];
   const out = [];

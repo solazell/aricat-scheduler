@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600&family=Mali:wght@600&family=Itim&family=Sriracha&family=Pattaya&family=Chonburi&family=Mitr:wght@500&family=Kodchasan:wght@600&family=Kanit:wght@500&display=swap">
 </head><body>
-<header class="top"><div class="brand"><span class="logo">🐱</span><div><b>Ari Cat Hotel</b><small>โรงแรมแมวอารี • ตั้งเวลาโพสต์ Facebook</small></div></div>
+<header class="top"><div class="brand"><img class="logo" src="logo.png" alt="Ari Cat Hotel"><div><b>Ari Cat Hotel</b><small>โรงแรมแมวอารี • ตั้งเวลาโพสต์ Facebook</small></div></div>
 <select id="theme" title="ธีม"><option value="auto">🌓 ตามระบบ</option><option value="light">☀️ สว่าง</option><option value="dark">🌙 มืด</option></select></header>
 <nav class="tabs">
 <button data-tab="create" class="on"><span class="ic">✨</span><span>สร้างโพสต์</span></button>
@@ -36,6 +36,10 @@
    <div class="row"><div><label>ฟิลเตอร์</label><select id="flt"><option value="none">ปกติ</option><option value="bright">สดใส</option><option value="warm">อบอุ่น</option><option value="soft">ฟุ้งนุ่ม</option><option value="bw">ขาวดำ</option></select></div>
     <div><label>กรอบ</label><select id="frame"><option value="0">ไม่มี</option><option value="1">มี</option></select></div>
     <div><label>สีกรอบ</label><input type="color" id="c3" value="#ffd1e0"></div></div>
+   <hr><label>🏷️ โลโก้โรงแรมบนรูป</label>
+   <div class="row"><div><select id="wm"><option value="1">แปะโลโก้</option><option value="0">ไม่แปะ</option></select></div><div><select id="wmPos"><option value="br">ขวาล่าง</option><option value="bl">ซ้ายล่าง</option><option value="tr">ขวาบน</option><option value="tl">ซ้ายบน</option><option value="cc">กึ่งกลาง</option></select></div></div>
+   <div class="row"><div><label>ขนาดโลโก้</label><input type="range" id="wmSize" min="6" max="45" value="18"></div><div><label>ความทึบ</label><input type="range" id="wmOp" min="20" max="100" value="95"></div></div>
+   <div class="row" style="margin-top:8px"><div><small>เปลี่ยนเป็นโลโก้อื่น (PNG โปร่งใสสวยสุด)</small><input type="file" id="logoUp" accept="image/*"></div><button class="btn alt" id="logoReset" style="flex:none">ใช้โลโก้เดิม</button></div>
   </div></div>
  <div>
  <div class="card"><h3><span class="step">2</span>แคปชั่น</h3>

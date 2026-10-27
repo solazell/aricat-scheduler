@@ -82,3 +82,5 @@ details.help code{background:var(--card);padding:1px 6px;border-radius:6px}
  .card{padding:16px;border-radius:20px}
  .q{flex-wrap:wrap}
 }
+
+.brand img.logo{background:#fff;object-fit:cover;border-radius:50%;padding:0;border:2px solid #ffffffb0;box-shadow:0 4px 14px #0003}
