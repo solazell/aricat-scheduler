@@ -54,7 +54,10 @@
   <div class="seg"><label><input type="radio" name="mode" value="auto" checked><span>⚡ ต่อคิวอัตโนมัติ</span></label><label><input type="radio" name="mode" value="manual"><span>🗓️ กำหนดเอง</span></label></div>
   <small>ต่อคิวอัตโนมัติ = ช่วงเวลาถัดไปที่ว่างตามที่ตั้งค่าไว้</small>
   <input type="datetime-local" id="when" style="margin-top:8px">
-  <div style="margin-top:14px"><button class="btn big-btn" id="add">➕ เพิ่มเข้าคิว</button></div></div>
+    <label class="check" style="margin-top:14px"><input type="checkbox" id="gbpOn"> 📍 โพสต์ลง Google Business ด้วย</label>
+  <select id="gbpMode" style="margin-top:8px"><option value="time">ส่งตามเวลาที่ตั้ง (ต้องเปิดแอปไว้ตอนถึงเวลา)</option><option value="now">ส่งทันทีที่เพิ่มเข้าคิว</option></select>
+  <small>รองรับเฉพาะรูป (ไม่รองรับวิดีโอ) • ส่งรูปแรกของโพสต์ • ตัดเบอร์โทร/ลิงก์/แฮชแท็กออกจากข้อความให้อัตโนมัติ</small>
+<div style="margin-top:14px"><button class="btn big-btn" id="add">➕ เพิ่มเข้าคิว</button></div></div>
  </div></div></section>
 <section id="queue"><div class="card"><div class="row" style="justify-content:space-between"><h3>คิวโพสต์</h3><button class="btn alt" id="runNow" style="flex:none">ส่งโพสต์ที่ค้างอยู่</button></div><div id="list"></div></div></section>
 <section id="settings"><div class="grid">
@@ -82,6 +85,23 @@
   <label>Graph API version</label><input type="text" id="apiVer" value="v23.0">
   <div style="margin-top:14px"><button class="btn big-btn" id="save">💾 บันทึกการตั้งค่า</button></div>
   <p><small>ข้อมูลทั้งหมดเก็บในอุปกรณ์ของคุณ</small></p></div>
+ <div class="card"><h3><span class="step">📍</span>Google Business Profile</h3>
+  <details class="help"><summary>วิธีตั้งค่า (ต้องขออนุมัติ API จาก Google ก่อน)</summary>
+   <ol><li>ที่ <b>console.cloud.google.com</b> สร้างโปรเจกต์ แล้วจดเลข <b>Project number</b></li>
+   <li>กรอกฟอร์ม <b>Business Profile API → Application for Basic API Access</b> พร้อมเลขโปรเจกต์ รอผลอนุมัติ (Google แจ้งว่าตรวจภายใน ~14 วัน)</li>
+   <li>เปิดใช้ API: <b>Google My Business API</b>, <b>My Business Account Management API</b>, <b>My Business Business Information API</b></li>
+   <li>ตั้งค่า OAuth consent screen แล้วสร้าง <b>OAuth client ID</b> ชนิด <b>Web application</b> ใส่ Redirect URI ด้านล่างใน Authorized redirect URIs</li>
+   <li>วาง Client ID → <b>บันทึก</b> → <b>เข้าสู่ระบบ Google</b> (ใช้บัญชีเจ้าของโปรไฟล์) → <b>โหลดรายชื่อสถานที่</b> → เลือกโรงแรม → <b>บันทึก</b></li></ol>
+   <p>⚠️ Google ไม่มีระบบตั้งเวลาโพสต์ผ่าน API จึงต้อง<b>เปิดแอปไว้</b>ตอนถึงเวลา (หรือเลือก "ส่งทันที") • token Google อยู่ได้ ~1 ชม. ต้องล็อกอินใหม่เมื่อหมดอายุ</p></details>
+  <label>Google OAuth Client ID</label><input type="text" id="gClientId" placeholder="xxxx.apps.googleusercontent.com">
+  <label>Redirect URI <small>(ใส่ใน Authorized redirect URIs)</small></label><input type="text" id="gRedir" readonly>
+  <div class="row" style="margin-top:10px"><button class="btn" id="gLogin">เข้าสู่ระบบ Google</button><button class="btn alt" id="gLoad">โหลดรายชื่อสถานที่</button></div>
+  <small id="gStatus"></small>
+  <label>สถานที่ (Location)</label><select id="gLoc"></select>
+  <label>หรือกรอกเอง <small>(รูปแบบ accounts/123/locations/456)</small></label><input type="text" id="gLocManual">
+  <div class="row"><div><label>ปุ่มบนโพสต์</label><select id="gCta"><option value="CALL">โทร</option><option value="BOOK">จอง (ต้องมีลิงก์)</option><option value="LEARN_MORE">ดูเพิ่มเติม (ต้องมีลิงก์)</option><option value="">ไม่มีปุ่ม</option></select></div>
+   <div><label>ลิงก์ของปุ่ม</label><input type="text" id="gCtaUrl" placeholder="https://lin.ee/IJYfsgb"></div></div>
+  <div style="margin-top:14px"><button class="btn big-btn" id="gSave">💾 บันทึก Google</button></div></div>
 </div></section>
 </main><div id="toast"></div>
-<script src="db.js"></script><script src="app.js"></script></body></html>
+<script src="db.js"></script><script src="app.js"></script><script src="gbp.js"></script></body></html>

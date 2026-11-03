@@ -1,12 +1,12 @@
 /* ===== เวอร์ชันมือถือ (PWA): ไม่ใช้ chrome.* ===== */
 const store = { get: () => JSON.parse(localStorage.getItem('cfg') || '{}'), set: o => localStorage.setItem('cfg', JSON.stringify({ ...store.get(), ...o })) };
-const REDIRECT = location.origin + location.pathname;
+const REDIRECT = location.origin + location.pathname.replace(/index\.html$/, ''); // ให้ได้ URI เดียวกันไม่ว่าเปิดด้วย /index.html หรือไม่
 const $ = id => document.getElementById(id);
 const BUILTIN = ['Mali', 'Itim', 'Sriracha', 'Pattaya', 'Chonburi', 'Mitr', 'Kodchasan', 'Kanit'];
 const FILT = { none: 'none', bright: 'brightness(1.1) saturate(1.2)', warm: 'sepia(.25) saturate(1.3) brightness(1.05)', soft: 'contrast(.9) brightness(1.1) saturate(1.1)', bw: 'grayscale(1)' };
 const CTA = `🐱 โรงแรมแมวอารี | Ari Cat Hotel
 💰 เริ่มต้น 250 บาท/วัน | From 250 THB/night
-✅ แอร์ 24 ชม. • เครื่องฟอกอากาศ • ดูแลตลอด 24 ชม. • อัพเดทเจ้านาย 3 เวลา
+✅ แอร์ 24 ชม. • เครื่องฟอกอากาศ • รปภ. 24 ชม. • อัพเดทเจ้านาย 3 เวลา
 📞 095-2946491 | WhatsApp 099-4291439
 Line: @aricathotel https://lin.ee/IJYfsgb
 💬 m.me/AriCatHotel
@@ -45,7 +45,7 @@ $('login').onclick = () => {
 };
 async function finishLogin() {
   let ut = new URLSearchParams(location.hash.slice(1)).get('access_token');
-  if (!ut) return;
+  if (!ut || new URLSearchParams(location.hash.slice(1)).get('state') === 'gbp') return;
   history.replaceState(null, '', location.pathname);
   document.querySelector('[data-tab=settings]').click();
   try {
@@ -325,9 +325,10 @@ async function addToQueue() {
   if (!at || isNaN(at)) return toast('กรุณาเลือกวันเวลา');
   if (manual && all.some(p => Math.floor(p.scheduledAt / 60000) === Math.floor(at / 60000)) && !confirm('มีโพสต์เวลานี้อยู่แล้ว ต้องการเพิ่มซ้ำเวลาเดิมไหม?')) return;
   if (at < Date.now() + 11 * 60e3) { at = Date.now(); toast('ใกล้เวลาเกินไป (Facebook ต้องล่วงหน้าอย่างน้อย 10 นาที) จะโพสต์ทันที'); }
-  const post = { id: crypto.randomUUID(), blobs, mediaType, caption, scheduledAt: at, status: 'queued' };
+  const post = { id: crypto.randomUUID(), blobs, mediaType, caption, scheduledAt: at, status: 'queued', gbp: gbpFlag() };
   await DB.put('posts', post);
   toast('เพิ่มเข้าคิว: ' + new Date(at).toLocaleString('th-TH'));
+  if (window.gbpTick) gbpTick();
   await sendPost(post);
 }
 
@@ -342,7 +343,7 @@ async function renderQueue() {
     d.innerHTML = `${p.mediaType === 'video' ? `<video src="${url}" muted></video>` : `<img src="${url}">`}
       <div style="flex:1"><b>${new Date(p.scheduledAt).toLocaleString('th-TH')}</b>
       ${bl.length > 1 ? `<span class="tag">📷 ${bl.length} รูป</span> ` : ''}<span class="tag ${p.status}">${label[p.status]}${p.status === 'sent' ? (p.viaFB ? ' (ตั้งเวลาที่ Facebook แล้ว)' : ' (โพสต์แล้ว)') : ''}</span>
-      <pre></pre>${p.error ? `<small style="color:#c00">${p.error}</small>` : ''}</div>
+      <pre></pre>${gbpTag(p)}${p.error ? `<small style="color:#c00">${p.error}</small>` : ''}</div>
       <div><button class="btn alt" data-a="now">โพสต์เลย</button> <button class="btn del" data-a="del">ลบ</button></div>`;
     d.querySelector('pre').textContent = p.caption;
     d.querySelector('[data-a=del]').onclick = async () => { await DB.del('posts', p.id); renderQueue(); };
@@ -403,6 +404,7 @@ async function sendPost(p) {
     p.status = 'sent'; p.fbId = r.id; p.viaFB = r.scheduled; p.error = '';
     toast(r.scheduled ? '✅ Facebook ตั้งเวลาโพสต์ให้แล้ว ปิดแอปได้เลย' : '✅ โพสต์แล้ว');
   } catch (e) { p.status = 'error'; p.error = String(e.message || e); toast('❌ ' + p.error); }
+  const fr = (await DB.all('posts')).find(x => x.id === p.id); if (fr && fr.gbp) p.gbp = fr.gbp;
   await DB.put('posts', p); renderQueue();
 }
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => { });
