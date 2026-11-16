@@ -55,6 +55,16 @@ async function gbpPatch(id, patch) {
   const f = (await DB.all('posts')).find(x => x.id === id); if (!f) return;
   f.gbp = { ...f.gbp, ...patch }; await DB.put('posts', f);
 }
+async function gcall(step, url, opts = {}) {
+  let r, txt;
+  try { r = await fetch(url, opts); txt = await r.text(); } catch (e) { throw new Error(`[${step}] เชื่อมต่อไม่ได้: ${e.message}`); }
+  let j = {}; try { j = txt ? JSON.parse(txt) : {}; } catch { }
+  if (!r.ok || j.error) {
+    const er = j.error || {};
+    throw new Error(`[${step}] ${er.message || txt.slice(0, 200) || 'HTTP ' + r.status} (HTTP ${r.status}${er.status ? ' ' + er.status : ''})`);
+  }
+  return j;
+}
 async function gbpSendPost(id) {
   const p = (await DB.all('posts')).find(x => x.id === id); if (!p || !p.gbp) return;
   try {
@@ -62,20 +72,38 @@ async function gbpSendPost(id) {
     if (!tok) throw new Error('Google หมดอายุ — ไปแท็บตั้งค่า แล้วกดเข้าสู่ระบบ Google ใหม่');
     if (!c.location) throw new Error('ยังไม่ได้เลือกสถานที่ Google (แท็บตั้งค่า)');
     if (p.mediaType !== 'image') throw new Error('Google รองรับเฉพาะรูปภาพ');
-    const h = { Authorization: 'Bearer ' + tok }, base = 'https://mybusiness.googleapis.com/v4/' + c.location;
+    const h = { Authorization: 'Bearer ' + tok }, J = { ...h, 'Content-Type': 'application/json' };
+    const base = 'https://mybusiness.googleapis.com/v4/' + c.location;
+    let media = null, note = '';
     // 1) อัปโหลดรูปผ่าน Google เพื่อให้ได้ URL สาธารณะ (รูปจะเข้าแกลเลอรีของโปรไฟล์ด้วย)
-    const up = gchk(await (await fetch(base + '/media:startUpload', { method: 'POST', headers: h })).json());
-    const put = await fetch('https://mybusiness.googleapis.com/upload/v1/media/' + up.resourceName + '?upload_type=media', { method: 'POST', headers: { ...h, 'Content-Type': 'image/jpeg' }, body: (p.blobs || [p.blob])[0] });
-    if (!put.ok) throw new Error('อัปโหลดรูปไป Google ไม่สำเร็จ (' + put.status + ')');
-    const m = gchk(await (await fetch(base + '/media', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ mediaFormat: 'PHOTO', locationAssociation: { category: 'ADDITIONAL' }, dataRef: { resourceName: up.resourceName } }) })).json());
+    try {
+      const up = await gcall('1 startUpload', base + '/media:startUpload', { method: 'POST', headers: J, body: '{}' });
+      if (!up.resourceName) throw new Error('[1 startUpload] ไม่ได้ resourceName กลับมา: ' + JSON.stringify(up).slice(0, 150));
+      await gcall('2 อัปโหลดรูป', 'https://mybusiness.googleapis.com/upload/v1/media/' + up.resourceName + '?upload_type=media', { method: 'POST', headers: { ...h, 'Content-Type': 'image/jpeg' }, body: (p.blobs || [p.blob])[0] });
+      const m = await gcall('3 createMedia', base + '/media', { method: 'POST', headers: J, body: JSON.stringify({ mediaFormat: 'PHOTO', locationAssociation: { category: 'ADDITIONAL' }, dataRef: { resourceName: up.resourceName } }) });
+      if (!m.googleUrl) throw new Error('[3 createMedia] ไม่ได้ googleUrl กลับมา: ' + JSON.stringify(m).slice(0, 150));
+      media = [{ mediaFormat: 'PHOTO', sourceUrl: m.googleUrl }];
+    } catch (e) { if (!c.textFallback) throw e; note = 'โพสต์แบบไม่มีรูป เพราะ ' + e.message; }
     // 2) สร้างโพสต์
-    const body = { languageCode: 'th', topicType: 'STANDARD', summary: gbpSummary(p.caption), media: [{ mediaFormat: 'PHOTO', sourceUrl: m.googleUrl }] };
+    const body = { languageCode: 'th', topicType: 'STANDARD', summary: gbpSummary(p.caption) };
+    if (media) body.media = media;
     if (c.cta === 'CALL') body.callToAction = { actionType: 'CALL' };
     else if (c.cta && c.ctaUrl) body.callToAction = { actionType: c.cta, url: c.ctaUrl };
-    const r = gchk(await (await fetch(base + '/localPosts', { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(body) })).json());
-    await gbpPatch(id, { status: 'sent', name: r.name, error: '' });
-    toast('📍 โพสต์ลง Google Business แล้ว');
-  } catch (e) { await gbpPatch(id, { status: 'error', error: String(e.message || e) }); toast('📍❌ ' + (e.message || e)); }
+    const post = b => gcall('4 สร้างโพสต์', base + '/localPosts', { method: 'POST', headers: J, body: JSON.stringify(b) });
+    let r;
+    try { r = await post(body); }
+    catch (e) {
+      if (!body.callToAction) throw e;
+      const { callToAction, ...noCta } = body;   // ลองใหม่โดยไม่มีปุ่ม
+      r = await post(noCta); note = (note ? note + ' • ' : '') + 'โพสต์แบบไม่มีปุ่ม เพราะ ' + e.message;
+    }
+    await gbpPatch(id, { status: 'sent', name: r.name, error: '', note });
+    toast(note ? '📍 โพสต์ Google แล้ว (มีข้อสังเกต ดูในคิว)' : '📍 โพสต์ลง Google Business แล้ว');
+  } catch (e) {
+    let msg = String(e.message || e);
+    if (/internal error/i.test(msg)) msg += ' — เป็นข้อผิดพลาดฝั่ง Google ลองกด "ส่ง Google ตอนนี้" ซ้ำ หรือติ๊ก "โพสต์แบบไม่มีรูปแทน" ในตั้งค่า';
+    await gbpPatch(id, { status: 'error', error: msg }); toast('📍❌ ' + msg);
+  }
   if (typeof renderQueue === 'function') renderQueue();
 }
 let gbpBusy = false, gbpWarned = false;
@@ -98,7 +126,7 @@ function gbpFlag() {
 function gbpTag(p) {
   if (!p.gbp) return '';
   const L = { queued: 'รอส่ง', sent: 'ส่งแล้ว', error: 'ผิดพลาด' }[p.gbp.status];
-  return `<div style="margin-top:4px"><span class="tag ${p.gbp.status}">📍 Google: ${L}</span> ${p.gbp.status !== 'sent' ? `<button class="btn alt" data-gbp="${p.id}" style="padding:3px 10px;font-size:12px">ส่ง Google ตอนนี้</button>` : ''}${p.gbp.error ? `<br><small style="color:#c00">${p.gbp.error}</small>` : ''}</div>`;
+  return `<div style="margin-top:4px"><span class="tag ${p.gbp.status}">📍 Google: ${L}</span> ${p.gbp.status !== 'sent' ? `<button class="btn alt" data-gbp="${p.id}" style="padding:3px 10px;font-size:12px">ส่ง Google ตอนนี้</button>` : ''}${p.gbp.error ? `<br><small style="color:#c00">${p.gbp.error}</small>` : ''}${p.gbp.note ? `<br><small>${p.gbp.note}</small>` : ''}</div>`;
 }
 document.addEventListener('click', e => { const b = e.target.closest('[data-gbp]'); if (b) { b.disabled = true; gbpSendPost(b.dataset.gbp); } });
 
@@ -106,12 +134,12 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-gbp]
 (function () {
   const c = GBP.cfg(), pref = (() => { try { return JSON.parse(localStorage.getItem('gbpPref') || '{}'); } catch { return {}; } })();
   $('gClientId').value = c.clientId || ''; $('gCta').value = c.cta ?? 'CALL'; $('gCtaUrl').value = c.ctaUrl || '';
-  $('gLocManual').value = c.location || ''; $('gRedir').value = GBP.redirect();
+  $('gLocManual').value = c.location || ''; $('gTextFallback').checked = !!c.textFallback; $('gRedir').value = GBP.redirect();
   if (c.location) $('gLoc').innerHTML = `<option value="${c.location}">${c.location}</option>`;
   $('gbpOn').checked = !!pref.on; if (pref.mode) $('gbpMode').value = pref.mode;
   $('gLogin').onclick = gbpLogin; $('gLoad').onclick = gbpLoad;
   $('gSave').onclick = () => {
-    GBP.save({ clientId: $('gClientId').value.trim(), location: $('gLocManual').value.trim() || $('gLoc').value, cta: $('gCta').value, ctaUrl: $('gCtaUrl').value.trim() });
+    GBP.save({ clientId: $('gClientId').value.trim(), location: $('gLocManual').value.trim() || $('gLoc').value, cta: $('gCta').value, ctaUrl: $('gCtaUrl').value.trim(), textFallback: $('gTextFallback').checked });
     $('gLocManual').value = GBP.cfg().location || ''; toast('บันทึกการตั้งค่า Google แล้ว ✅');
   };
   $('gLoc').onchange = () => { $('gLocManual').value = $('gLoc').value; };
